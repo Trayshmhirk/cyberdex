@@ -1,0 +1,29 @@
+{
+  // Editor - Format on save with Prettier
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // Files - Consistent line endings
+  "files.eol": "\n",
+
+  // Prettier
+  "prettier.requireConfig": true,
+
+  // ESLint
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+
+  // TypeScript
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "terminal.integrated.windowsEnableConpty": false,
+
+  // CSS - Suppress false warnings for Tailwind v4 custom at-rules (@theme, @custom-variant, @apply)
+  "css.lint.unknownAtRules": "ignore"
+}
