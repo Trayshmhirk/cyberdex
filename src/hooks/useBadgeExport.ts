@@ -161,18 +161,18 @@ export function useBadgeExport(): UseBadgeExportReturn {
         ctx.fillStyle = "#0f172a";
         ctx.font = "bold 52px 'Plus Jakarta Sans', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(staff.fullName, width / 2, 950);
+        ctx.fillText(staff.fullName, width / 2, 935);
 
         // Employee Position
         ctx.fillStyle = "#1d4ed8";
         ctx.font = "600 32px 'Plus Jakarta Sans', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(staff.position, width / 2, 1025);
+        ctx.fillText(staff.position, width / 2, 1010);
 
         // Verified Status Badge Pill
         const pillWidth = 500;
         const pillHeight = 60;
-        const pillY = 1095;
+        const pillY = 1075;
         ctx.fillStyle = "#ecfdf5";
         ctx.strokeStyle = "#a7f3d0";
         ctx.lineWidth = 2;
@@ -192,8 +192,8 @@ export function useBadgeExport(): UseBadgeExportReturn {
         ctx.textAlign = "center";
         ctx.fillText("● ACTIVE — VERIFIED STAFF", width / 2, pillY + 39);
 
-        // Metadata Card Box (matching preview card)
-        const metaBoxY = 1250;
+        // Metadata Card Box
+        const metaBoxY = 1220;
         const metaBoxWidth = 920;
         const metaBoxHeight = staff.email ? 310 : 210;
         ctx.fillStyle = "#f8fafc";
@@ -300,6 +300,41 @@ export function useBadgeExport(): UseBadgeExportReturn {
             metaBoxY + 160
           );
         }
+
+        // Authorized Signature Block (centered, ending ~42px above footer)
+        try {
+          const sig = await loadImage("/authorize-signature.png");
+          const sigWidth = 270;
+          const sigHeight = (sig.height / sig.width) * sigWidth;
+          ctx.drawImage(
+            sig,
+            width / 2 - sigWidth / 2,
+            1580,
+            sigWidth,
+            sigHeight
+          );
+        } catch (sigErr) {
+          console.warn("Failed to load authorized signature:", sigErr);
+        }
+
+        // Signature Rule Line
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(width / 2 - 160, 1705);
+        ctx.lineTo(width / 2 + 160, 1705);
+        ctx.stroke();
+
+        // Signature Labels (bold, high contrast, +2px)
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 24px 'Plus Jakarta Sans', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Authorized Signature", width / 2, 1740);
+
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 28px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("CEO", width / 2, 1775);
 
         // Bottom Accent Strip (matching preview card footer)
         const bottomGrad = ctx.createLinearGradient(

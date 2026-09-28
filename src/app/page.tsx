@@ -344,7 +344,7 @@ export default function GeneratorPage() {
                   </div>
 
                   {/* Verified Metadata Box */}
-                  <div className="mt-4 space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs">
+                  <div className="mt-3 space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="font-medium text-slate-500">
                         Staff ID:
@@ -377,8 +377,28 @@ export default function GeneratorPage() {
                       )}
                   </div>
 
+                  {/* Authorized Signature Block */}
+                  <div className="my-2.5 flex flex-col items-center justify-center">
+                    <div className="relative h-7 w-20">
+                      <Image
+                        src="/authorize-signature.png"
+                        alt="Authorized Signature"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+                    <div className="my-0.5 w-24 border-t border-slate-300" />
+                    <span className="font-mono text-[8px] font-semibold tracking-wider text-slate-700 uppercase">
+                      Authorized Signature
+                    </span>
+                    <span className="font-mono text-[7px] text-slate-400">
+                      CEO
+                    </span>
+                  </div>
+
                   {/* Bottom Accent Footer */}
-                  <div className="from-cyber-blue via-cyber-cyan to-cyber-amber -mx-5 mt-4 -mb-5 bg-linear-to-r py-2 text-center">
+                  <div className="from-cyber-blue via-cyber-cyan to-cyber-amber -mx-5 mt-3 -mb-5 bg-linear-to-r py-2 text-center">
                     <span className="font-mono text-[10px] font-bold tracking-wider text-white">
                       www.cyberdex.com.ng
                     </span>
