@@ -18,7 +18,6 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Shield,
   QrCode,
   CreditCard,
   Mail,
@@ -29,18 +28,21 @@ import {
 
 export default function GeneratorPage() {
   const staffList = getAllStaff();
-  // Starts empty — no staff pre-selected
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [generated, setGenerated] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [badgeSide, setBadgeSide] = useState<"front" | "back">("front");
   const qrCanvasRef = useRef<HTMLDivElement>(null);
 
   const {
     canvasRef: highResCanvasRef,
     svgRef,
     isCopied,
+    isExportingFront,
+    isExportingBack,
     copyUrl,
-    downloadHighResPng,
+    downloadCardFront,
+    downloadCardBack,
     downloadVectorSvg,
   } = useBadgeExport();
 
@@ -73,25 +75,26 @@ export default function GeneratorPage() {
         <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
           {/* Left Column: Staff Selector & Issuance Controls */}
           <div className="space-y-6 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-7">
-            {/* Header */}
-            <div className="space-y-1.5 border-b border-slate-100 pb-5">
-              <div className="flex items-center gap-2">
-                <div className="text-cyber-navy flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 shadow-2xs">
-                  <Shield className="h-4 w-4" />
+            {/* Header with Official Cyberdex Logo */}
+            <div className="space-y-4 border-b border-slate-100 pb-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/cyberdex-logo-main.svg"
+                    alt="Cyberdex Logo"
+                    width={90}
+                    height={26}
+                    className="h-15 w-auto object-cover"
+                    priority
+                  />
                 </div>
-                <span className="font-mono text-xs font-bold tracking-[0.2em] text-slate-900 uppercase">
-                  Cyberdex
-                </span>
-                <span className="font-mono text-[11px] text-slate-500">
-                  {"//"} Badge Studio
-                </span>
               </div>
               <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                 Staff ID Generator
               </h1>
               <p className="text-xs leading-relaxed text-slate-500 sm:text-sm">
                 Select a staff member to configure and preview their physical
-                verification badge.
+                dual-sided verification badge.
               </p>
             </div>
 
@@ -158,7 +161,7 @@ export default function GeneratorPage() {
               ) : (
                 <>
                   <QrCode className="h-4 w-4" />
-                  <span>Generate QR Code & Print Asset</span>
+                  <span>Generate Dual-Sided ID Badge</span>
                 </>
               )}
             </button>
@@ -166,23 +169,44 @@ export default function GeneratorPage() {
             {/* Actions Suite (Revealed once generated) */}
             {generated && currentStaff && (
               <div className="animate-in fade-in space-y-3 pt-1 duration-300">
-                {/* Print Asset Download Suite (Ultra-HD PNG & Lossless Vector SVG) */}
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => downloadHighResPng(currentStaff.id)}
-                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:bg-slate-100 hover:text-slate-900"
-                  >
-                    <Download className="text-cyber-blue h-4 w-4" />
-                    <span>Ultra-HD PNG (2048px)</span>
-                  </button>
+                {/* 300 DPI High-Res Print Asset Downloads */}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      disabled={isExportingFront || isExportingBack}
+                      onClick={() => downloadCardFront(currentStaff)}
+                      className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
+                    >
+                      {isExportingFront ? (
+                        <Loader2 className="text-cyber-blue h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="text-cyber-blue h-4 w-4" />
+                      )}
+                      <span>Front Card (600 DPI)</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isExportingFront || isExportingBack}
+                      onClick={() => downloadCardBack(currentStaff)}
+                      className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
+                    >
+                      {isExportingBack ? (
+                        <Loader2 className="text-cyber-amber h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="text-cyber-amber h-4 w-4" />
+                      )}
+                      <span>Back Card (600 DPI)</span>
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => downloadVectorSvg(currentStaff.id)}
-                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:bg-slate-100 hover:text-slate-900"
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 hover:text-slate-900"
                   >
-                    <FileCode2 className="text-cyber-cyan h-4 w-4" />
-                    <span>Vector SVG (Print Ready)</span>
+                    <FileCode2 className="text-cyber-cyan h-3.5 w-3.5" />
+                    <span>Download Standalone Vector QR (.svg)</span>
                   </button>
                 </div>
 
@@ -225,15 +249,37 @@ export default function GeneratorPage() {
             )}
           </div>
 
-          {/* Right Column: Light-Surface Physical ID Badge Preview */}
+          {/* Right Column: Dual-Sided Physical ID Badge Preview */}
           <div className="flex min-h-125 flex-col items-center justify-center rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xl shadow-slate-200/50">
+            {/* Header with Segmented Front / Back Switcher */}
             <div className="mb-5 flex w-full items-center justify-between border-b border-slate-100 pb-3">
               <span className="font-mono text-xs font-bold tracking-wider text-slate-700 uppercase">
-                Physical Badge Preview
+                Badge Preview
               </span>
-              <span className="font-mono text-[11px] text-slate-400">
-                CR80 PVC // 300 DPI
-              </span>
+              <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setBadgeSide("front")}
+                  className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    badgeSide === "front"
+                      ? "bg-white text-slate-900 shadow-2xs"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Front View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBadgeSide("back")}
+                  className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    badgeSide === "back"
+                      ? "bg-white text-slate-900 shadow-2xs"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Back View
+                </button>
+              </div>
             </div>
 
             {isGenerating ? (
@@ -241,104 +287,222 @@ export default function GeneratorPage() {
               <div className="flex min-h-95 w-full max-w-75 animate-pulse flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/70 p-6 text-center">
                 <Loader2 className="text-cyber-blue h-8 w-8 animate-spin" />
                 <p className="mt-4 font-mono text-xs font-semibold text-slate-700">
-                  Compiling badge graphics...
+                  Compiling 300 DPI badge assets...
                 </p>
                 <p className="mt-1 font-mono text-[11px] text-slate-400">
-                  Generating 300 DPI print matrix
+                  Rendering front and back print matrices
                 </p>
               </div>
             ) : currentStaff && generated ? (
-              /* Light-Surface PVC Physical ID Badge */
-              <div className="animate-in zoom-in-95 relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl duration-300">
-                {/* Lanyard Hole Cutout Slot */}
-                <div className="mx-auto mb-3.5 h-2.5 w-12 rounded-full border border-slate-200 bg-slate-100 shadow-inner" />
+              badgeSide === "front" ? (
+                /* FRONT VIEW: Executive Light PVC Badge (matching reference) */
+                <div className="animate-in zoom-in-95 relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl duration-300">
+                  {/* Lanyard Cutout Slot */}
+                  <div className="mx-auto mb-3 h-2.5 w-14 rounded-full border border-slate-200 bg-slate-100 shadow-inner" />
 
-                {/* Badge Top Header Strip */}
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-1.5">
-                    <Shield className="text-cyber-blue h-4 w-4" />
-                    <span className="font-mono text-xs font-bold tracking-[0.2em] text-slate-900 uppercase">
-                      Cyberdex
-                    </span>
+                  {/* Official Logo at Top */}
+                  <div className="relative z-10 mb-3 flex justify-center">
+                    <div className="relative h-10 w-32">
+                      <Image
+                        src="/cyberdex-logo-main.png"
+                        alt="Cyberdex"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
-                    <ShieldCheck className="h-3 w-3 text-emerald-600" />
-                    VERIFIED
-                  </span>
-                </div>
 
-                {/* Photo & Personnel Info */}
-                <div className="mt-4 flex items-center gap-3.5">
-                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-xs">
-                    <Image
-                      src={currentStaff.avatarUrl}
-                      alt={currentStaff.fullName}
-                      fill
-                      className="object-cover"
-                      sizes="80px"
-                      priority
-                    />
+                  {/* Circular Employee Photo with Accent Ring */}
+                  <div className="relative mx-auto my-3 flex justify-center">
+                    <div className="ring-cyber-blue/25 relative h-24 w-24 overflow-hidden rounded-full border-2 border-white shadow-md ring-4">
+                      <Image
+                        src={currentStaff.avatarUrl}
+                        alt={currentStaff.fullName}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
+                        priority
+                      />
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <p className="truncate text-sm leading-tight font-bold text-slate-900">
+
+                  {/* Personnel Identity */}
+                  <div className="space-y-1 text-center">
+                    <h2 className="text-base leading-tight font-bold text-slate-900">
                       {currentStaff.fullName}
-                    </p>
-                    <p className="text-cyber-blue line-clamp-2 text-[11px] leading-snug font-semibold">
+                    </h2>
+                    <p className="text-cyber-blue line-clamp-2 text-xs leading-snug font-semibold">
                       {currentStaff.position}
                     </p>
-                    <span className="inline-block rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-800">
-                      {currentStaff.id}
-                    </span>
+                    <div className="pt-1">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
+                        <ShieldCheck className="h-3 w-3 text-emerald-600" />
+                        ACTIVE — VERIFIED STAFF
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Verified Metadata Box */}
+                  <div className="mt-3 space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-medium text-slate-500">
+                        Staff ID:
+                      </span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {currentStaff.id}
+                      </span>
+                    </div>
                     {currentStaff.email && (
-                      <p className="flex items-center gap-1 truncate pt-0.5 text-[10px] text-slate-500">
-                        <Mail className="h-2.5 w-2.5 shrink-0 text-slate-400" />
-                        <span className="truncate">{currentStaff.email}</span>
-                      </p>
+                      <div className="flex items-center justify-between border-t border-slate-200/60 pt-1.5 text-[11px]">
+                        <span className="flex items-center gap-1 font-medium text-slate-500">
+                          <Mail className="h-2.5 w-2.5" />
+                          <span>Email:</span>
+                        </span>
+                        <span className="max-w-42.5 truncate font-mono text-slate-800">
+                          {currentStaff.email}
+                        </span>
+                      </div>
                     )}
+                    {currentStaff.certifications &&
+                      currentStaff.certifications.length > 0 && (
+                        <div className="flex items-center justify-between border-t border-slate-200/60 pt-1.5 text-[11px]">
+                          <span className="font-medium text-slate-500">
+                            Credentials:
+                          </span>
+                          <span className="text-cyber-blue max-w-42.5 truncate font-mono font-semibold">
+                            {currentStaff.certifications[0]}
+                          </span>
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Authorized Signature Block */}
+                  <div className="my-2.5 flex flex-col items-center justify-center">
+                    <div className="relative h-7 w-20">
+                      <Image
+                        src="/authorize-signature.png"
+                        alt="Authorized Signature"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+                    <div className="my-0.5 w-24 border-t border-slate-300" />
+                    <span className="font-mono text-[8px] font-semibold tracking-wider text-slate-700 uppercase">
+                      Authorized Signature
+                    </span>
+                    <span className="font-mono text-[7px] text-slate-400">
+                      CEO
+                    </span>
+                  </div>
+
+                  {/* Bottom Accent Footer */}
+                  <div className="from-cyber-blue via-cyber-cyan to-cyber-amber -mx-5 mt-3 -mb-5 bg-linear-to-r py-2 text-center">
+                    <span className="font-mono text-[10px] font-bold tracking-wider text-white">
+                      www.cyberdex.com.ng
+                    </span>
                   </div>
                 </div>
+              ) : (
+                /* BACK VIEW: Corporate Badge Terms, QR & Inquiries (matching reference) */
+                <div className="animate-in zoom-in-95 relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl duration-300">
+                  {/* Lanyard Cutout Slot */}
+                  <div className="mx-auto mb-3 h-2.5 w-14 rounded-full border border-slate-200 bg-slate-100 shadow-inner" />
 
-                {/* Scannable High-Contrast QR Section */}
-                <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5">
-                  <div className="flex items-center justify-center">
+                  {/* Official Logo at Top (identical position and dimensions to Front View) */}
+                  <div className="relative z-10 mb-3 flex justify-center">
+                    <div className="relative h-10 w-32">
+                      <Image
+                        src="/cyberdex-logo-main.png"
+                        alt="Cyberdex"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+                  </div>
+
+                  {/* Terms & Conditions Notice */}
+                  <div className="space-y-1 text-center">
+                    <span className="text-cyber-amber font-mono text-[10px] font-bold tracking-wider uppercase">
+                      Terms & Conditions
+                    </span>
+                    <ul className="space-y-1 pt-1 text-left text-[10px] leading-tight text-slate-600">
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-cyber-amber mt-0.5">•</span>
+                        <span>
+                          This ID card is the official property of Cyberdex.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-cyber-amber mt-0.5">•</span>
+                        <span>
+                          Must be worn at all times while on company premises.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-cyber-amber mt-0.5">•</span>
+                        <span>
+                          This credential pass is strictly non-transferable.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-cyber-amber mt-0.5">•</span>
+                        <span>
+                          If found, please return to Cyberdex or scan below.
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Centered High-Contrast QR Code (Expanded with reduced container padding) */}
+                  <div className="my-3 flex flex-col items-center justify-center">
                     <div
                       ref={qrCanvasRef}
-                      className="rounded-lg border border-slate-200/80 bg-white p-2 shadow-2xs"
+                      className="rounded-xl border border-slate-200 bg-slate-50/80 p-1.5 shadow-xs"
                     >
                       <QRCodeCanvas
                         value={verificationUrl}
-                        size={140}
+                        size={144}
                         level="H"
                         marginSize={1}
                       />
                     </div>
+                    <span className="mt-1.5 font-mono text-[9px] text-slate-400">
+                      Scan with camera to verify credentials
+                    </span>
                   </div>
-                  <p className="mt-2 text-center font-mono text-[10px] text-slate-500">
-                    Scan with any mobile device to verify
-                  </p>
-                </div>
 
-                {/* Security Footer */}
-                <div className="mt-3.5 border-t border-slate-100 pt-2.5 text-center">
-                  <p className="font-mono text-[9px] leading-tight text-slate-400">
-                    Official property of Cyberdex Security.
-                    <br />
-                    verify.cyberdex.com.ng
-                  </p>
+                  {/* Contact & Verification Registry */}
+                  <div className="space-y-0.5 text-center font-mono text-[9px] text-slate-500">
+                    <p className="font-semibold text-slate-700">
+                      verify.cyberdex.com.ng
+                    </p>
+                    <p>info@cyberdex.com.ng</p>
+                  </div>
+
+                  {/* Bottom Accent Footer */}
+                  <div className="from-cyber-blue via-cyber-cyan to-cyber-amber -mx-5 mt-4 -mb-5 bg-linear-to-r py-2 text-center">
+                    <span className="font-mono text-[10px] font-bold tracking-wider text-white">
+                      OFFICIAL SECURITY PROPERTY
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )
             ) : (
-              /* Snug, Proportional Blueprint Wireframe State */
+              /* Blueprint Wireframe Initial State */
               <div className="flex min-h-95 w-full max-w-75 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
                 <div className="mb-3.5 flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400">
                   <CreditCard className="h-6 w-6" />
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900">
-                  Physical Badge Wireframe
+                  Dual-Sided Badge Studio
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">
                   Select a staff member from the left panel and click
-                  &ldquo;Generate QR Code&rdquo; to preview their card.
+                  &ldquo;Generate Dual-Sided ID Badge&rdquo; to preview their
+                  card.
                 </p>
               </div>
             )}
@@ -357,7 +521,7 @@ export default function GeneratorPage() {
               value={verificationUrl}
               size={2048}
               level="H"
-              marginSize={4}
+              marginSize={1}
             />
           )}
         </div>
@@ -367,7 +531,7 @@ export default function GeneratorPage() {
               value={verificationUrl}
               size={2048}
               level="H"
-              marginSize={4}
+              marginSize={1}
             />
           )}
         </div>

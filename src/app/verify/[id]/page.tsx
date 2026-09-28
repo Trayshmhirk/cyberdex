@@ -46,12 +46,14 @@ export default async function VerificationPage({ params }: Props) {
           <div className="relative h-36 w-full bg-linear-to-r from-slate-950 via-slate-900 to-indigo-950 px-6 py-4 sm:h-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white backdrop-blur-xs">
-                  <Shield className="h-4 w-4" />
-                </div>
-                <span className="font-mono text-xs font-bold tracking-[0.2em] text-white uppercase">
-                  Cyberdex
-                </span>
+                <Image
+                  src="/cyberdex-logo-main.svg"
+                  alt="Cyberdex Logo"
+                  width={90}
+                  height={26}
+                  className="h-20 w-auto object-cover"
+                  priority
+                />
               </div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 font-mono text-[11px] font-medium text-slate-200 backdrop-blur-xs">
                 <Lock className="h-3 w-3 text-emerald-400" />
@@ -59,10 +61,8 @@ export default async function VerificationPage({ params }: Props) {
               </span>
             </div>
 
-            {/* Subtle background decorative emblem */}
-            <div className="pointer-events-none absolute -right-6 -bottom-6 text-white opacity-10">
-              <Shield className="h-32 w-32" />
-            </div>
+            {/* Subtle background decorative glow */}
+            <div className="from-cyber-blue/20 to-cyber-amber/20 pointer-events-none absolute -right-6 -bottom-6 h-32 w-32 rounded-full bg-linear-to-br blur-xl" />
           </div>
 
           {/* Overlapping Avatar Circle */}
