@@ -183,7 +183,7 @@ export default function GeneratorPage() {
                       ) : (
                         <Download className="text-cyber-blue h-4 w-4" />
                       )}
-                      <span>Front Card (300 DPI)</span>
+                      <span>Front Card (600 DPI)</span>
                     </button>
                     <button
                       type="button"
@@ -196,7 +196,7 @@ export default function GeneratorPage() {
                       ) : (
                         <Download className="text-cyber-amber h-4 w-4" />
                       )}
-                      <span>Back Card (300 DPI)</span>
+                      <span>Back Card (600 DPI)</span>
                     </button>
                   </div>
 

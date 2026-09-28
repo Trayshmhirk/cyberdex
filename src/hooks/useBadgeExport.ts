@@ -63,9 +63,10 @@ export function useBadgeExport(): UseBadgeExportReturn {
       try {
         const width = 1200;
         const height = 1900;
+        const scale = 2; // Ultra-HD 2400 x 3800 px (711 DPI industrial grade)
         const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width * scale;
+        canvas.height = height * scale;
         const ctx = canvas.getContext("2d");
         if (!ctx) return false;
 
@@ -74,7 +75,8 @@ export function useBadgeExport(): UseBadgeExportReturn {
           await document.fonts.ready;
         }
 
-        // Enable highest-grade bicubic image smoothing
+        // Enable 2x scaling for ultra-high resolution rasterization
+        ctx.scale(scale, scale);
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
 
@@ -322,7 +324,7 @@ export function useBadgeExport(): UseBadgeExportReturn {
         const dataUrl = canvas.toDataURL("image/png");
         triggerDownload(
           dataUrl,
-          `cyberdex-${staff.id.toLowerCase()}-badge-front-300dpi.png`
+          `cyberdex-${staff.id.toLowerCase()}-badge-front-600dpi.png`
         );
         return true;
       } catch (err) {
@@ -342,9 +344,10 @@ export function useBadgeExport(): UseBadgeExportReturn {
       try {
         const width = 1200;
         const height = 1900;
+        const scale = 2; // Ultra-HD 2400 x 3800 px (711 DPI industrial grade)
         const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width * scale;
+        canvas.height = height * scale;
         const ctx = canvas.getContext("2d");
         if (!ctx) return false;
 
@@ -353,7 +356,8 @@ export function useBadgeExport(): UseBadgeExportReturn {
           await document.fonts.ready;
         }
 
-        // Enable highest-grade bicubic image smoothing
+        // Enable 2x scaling for ultra-high resolution rasterization
+        ctx.scale(scale, scale);
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
 
@@ -491,7 +495,7 @@ export function useBadgeExport(): UseBadgeExportReturn {
         const dataUrl = canvas.toDataURL("image/png");
         triggerDownload(
           dataUrl,
-          `cyberdex-${staff.id.toLowerCase()}-badge-back-300dpi.png`
+          `cyberdex-${staff.id.toLowerCase()}-badge-back-600dpi.png`
         );
         return true;
       } catch (err) {
