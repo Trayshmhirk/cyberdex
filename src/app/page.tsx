@@ -21,9 +21,12 @@ import {
   QrCode,
   CreditCard,
   Mail,
+  Phone,
   ShieldCheck,
   Loader2,
   FileCode2,
+  Eye,
+  X,
 } from "lucide-react";
 
 export default function GeneratorPage() {
@@ -32,6 +35,11 @@ export default function GeneratorPage() {
   const [generated, setGenerated] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [badgeSide, setBadgeSide] = useState<"front" | "back">("front");
+  const [previewModalSide, setPreviewModalSide] = useState<
+    "front" | "back" | null
+  >(null);
+  const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
   const qrCanvasRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -43,6 +51,8 @@ export default function GeneratorPage() {
     copyUrl,
     downloadCardFront,
     downloadCardBack,
+    generateCardFrontDataUrl,
+    generateCardBackDataUrl,
     downloadVectorSvg,
   } = useBadgeExport();
 
@@ -66,6 +76,24 @@ export default function GeneratorPage() {
   const handleStaffChange = (value: string | null) => {
     setSelectedStaffId(value || "");
     setGenerated(false);
+  };
+
+  const handleOpenLivePreview = async (side: "front" | "back") => {
+    if (!currentStaff) return;
+    setPreviewModalSide(side);
+    setIsPreviewLoading(true);
+    setPreviewModalUrl(null);
+    try {
+      const url =
+        side === "front"
+          ? await generateCardFrontDataUrl(currentStaff)
+          : await generateCardBackDataUrl(currentStaff);
+      setPreviewModalUrl(url);
+    } catch (err) {
+      console.error("Failed to generate live export preview:", err);
+    } finally {
+      setIsPreviewLoading(false);
+    }
   };
 
   return (
@@ -199,6 +227,26 @@ export default function GeneratorPage() {
                       <span>Back Card (600 DPI)</span>
                     </button>
                   </div>
+
+                  <button
+                    type="button"
+                    disabled={
+                      isPreviewLoading || isExportingFront || isExportingBack
+                    }
+                    onClick={() => handleOpenLivePreview(badgeSide)}
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50/80 py-2.5 text-xs font-semibold text-blue-700 shadow-2xs transition-colors hover:bg-blue-100 hover:text-blue-800 disabled:opacity-50"
+                  >
+                    {isPreviewLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-blue-600" />
+                    )}
+                    <span>
+                      Live View Rendered{" "}
+                      {badgeSide === "front" ? "Front" : "Back"} Card (No
+                      Download)
+                    </span>
+                  </button>
 
                   <button
                     type="button"
@@ -364,8 +412,20 @@ export default function GeneratorPage() {
                         </span>
                       </div>
                     )}
+                    {currentStaff.phone && (
+                      <div className="flex items-center justify-between border-t border-slate-200/60 pt-1.5 text-[11px]">
+                        <span className="flex items-center gap-1 font-medium text-slate-500">
+                          <Phone className="h-2.5 w-2.5" />
+                          <span>Phone:</span>
+                        </span>
+                        <span className="max-w-42.5 truncate font-mono text-slate-800">
+                          {currentStaff.phone}
+                        </span>
+                      </div>
+                    )}
                     {currentStaff.certifications &&
-                      currentStaff.certifications.length > 0 && (
+                      currentStaff.certifications.length > 0 &&
+                      !currentStaff.email && (
                         <div className="flex items-center justify-between border-t border-slate-200/60 pt-1.5 text-[11px]">
                           <span className="font-medium text-slate-500">
                             Credentials:
@@ -450,7 +510,7 @@ export default function GeneratorPage() {
                       <li className="flex items-start gap-1.5">
                         <span className="text-cyber-amber mt-0.5">•</span>
                         <span>
-                          If found, please return to Cyberdex or scan below.
+                          If found, return to Head Office or call hotline below.
                         </span>
                       </li>
                     </ul>
@@ -464,7 +524,7 @@ export default function GeneratorPage() {
                     >
                       <QRCodeCanvas
                         value={verificationUrl}
-                        size={144}
+                        size={152}
                         level="H"
                         marginSize={1}
                       />
@@ -474,8 +534,25 @@ export default function GeneratorPage() {
                     </span>
                   </div>
 
+                  {/* Head Office & Lost Card Hotline Notice */}
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-2 text-center">
+                    <p className="font-mono text-[9px] font-bold tracking-wider text-amber-700 uppercase">
+                      Head Office
+                    </p>
+                    <p className="mt-0.5 text-[9px] leading-tight text-slate-600">
+                      6, Aina Street, Inity Estates, Obawole, Ogba, Ikeja,
+                      Lagos, Nigeria
+                    </p>
+                    <p className="mt-1 font-mono text-[9px] font-semibold text-slate-700">
+                      If Lost, Call:{" "}
+                      <span className="font-bold text-amber-800">
+                        +234 803 216 4197
+                      </span>
+                    </p>
+                  </div>
+
                   {/* Contact & Verification Registry */}
-                  <div className="space-y-0.5 text-center font-mono text-[9px] text-slate-500">
+                  <div className="mt-2 space-y-0.5 text-center font-mono text-[9px] text-slate-500">
                     <p className="font-semibold text-slate-700">
                       verify.cyberdex.com.ng
                     </p>
@@ -536,6 +613,115 @@ export default function GeneratorPage() {
           )}
         </div>
       </div>
+
+      {/* Live Export Render Preview Modal (Full resolution inspection without downloading) */}
+      {previewModalSide !== null && (
+        <div
+          className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm duration-200"
+          onClick={() => setPreviewModalSide(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="animate-in zoom-in-95 relative flex max-h-[92vh] w-full max-w-xl flex-col rounded-3xl border border-slate-700/60 bg-slate-900 p-5 shadow-2xl duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Eye className="text-cyber-cyan h-4 w-4" />
+                <span className="font-mono text-xs font-bold tracking-wider text-slate-200 uppercase">
+                  Live 600 DPI Export Preview
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Side Switcher within Modal */}
+                <div className="flex items-center gap-1 rounded-lg bg-slate-800 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenLivePreview("front")}
+                    className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                      previewModalSide === "front"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Front
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenLivePreview("back")}
+                    className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                      previewModalSide === "back"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Back
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPreviewModalSide(null)}
+                  className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                  title="Close preview"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Image Body */}
+            <div className="flex flex-1 items-center justify-center overflow-auto p-4">
+              {isPreviewLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                  <Loader2 className="text-cyber-cyan h-8 w-8 animate-spin" />
+                  <p className="mt-3 font-mono text-xs">
+                    Rendering 600 DPI{" "}
+                    {previewModalSide === "front" ? "Front" : "Back"} Card...
+                  </p>
+                </div>
+              ) : previewModalUrl ? (
+                <div className="relative max-h-[68vh] overflow-hidden rounded-2xl border border-slate-700/80 shadow-2xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewModalUrl}
+                    alt={`${previewModalSide} badge preview`}
+                    className="max-h-[68vh] w-auto object-contain"
+                  />
+                </div>
+              ) : (
+                <p className="font-mono text-xs text-slate-500">
+                  Failed to generate preview image.
+                </p>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="flex items-center justify-between border-t border-slate-800 pt-3">
+              <span className="font-mono text-[11px] text-slate-400">
+                True 2400 × 3800 px (600 DPI) Output
+              </span>
+              {currentStaff && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    previewModalSide === "front"
+                      ? downloadCardFront(currentStaff)
+                      : downloadCardBack(currentStaff)
+                  }
+                  className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-blue-700"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download This PNG</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
