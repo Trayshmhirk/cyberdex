@@ -10,6 +10,10 @@ import {
   Mail,
   Lock,
   KeyRound,
+  Phone,
+  MapPin,
+  PhoneCall,
+  ShieldAlert,
 } from "lucide-react";
 
 type Props = {
@@ -110,11 +114,7 @@ export default async function VerificationPage({ params }: Props) {
           {/* Body Sections */}
           <div className="space-y-6 border-t border-slate-100 px-6 py-6 sm:px-8">
             {/* Quick Identifier Cards */}
-            <div
-              className={`grid grid-cols-1 gap-3 ${
-                staff.email ? "sm:grid-cols-2" : "sm:grid-cols-1"
-              }`}
-            >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5">
                 <div className="flex items-center gap-2 text-slate-500">
                   <KeyRound className="text-cyber-cyan size-4 shrink-0" />
@@ -140,6 +140,23 @@ export default async function VerificationPage({ params }: Props) {
                     className="text-cyber-cyan hover:text-cyber-blue mt-1 block truncate font-mono text-xs font-semibold hover:underline"
                   >
                     {staff.email}
+                  </a>
+                </div>
+              )}
+
+              {staff.phone && (
+                <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 sm:col-span-2">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Phone className="text-cyber-cyan size-4 shrink-0" />
+                    <span className="font-mono text-[11px] font-semibold uppercase">
+                      Direct Contact
+                    </span>
+                  </div>
+                  <a
+                    href={`tel:${staff.phone}`}
+                    className="text-cyber-cyan hover:text-cyber-blue mt-1 block truncate font-mono text-xs font-semibold hover:underline"
+                  >
+                    {staff.phone}
                   </a>
                 </div>
               )}
@@ -194,6 +211,45 @@ export default async function VerificationPage({ params }: Props) {
                 <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">
                   {staff.bio}
                 </p>
+              </div>
+            </div>
+
+            {/* If Card Is Found / Return Protocol */}
+            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-4 sm:p-5">
+              <div className="flex items-center gap-2 text-amber-900">
+                <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600" />
+                <h3 className="font-mono text-xs font-bold tracking-wider uppercase">
+                  If This Physical Card Is Found
+                </h3>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-amber-900/80">
+                This credential is the official security property of Cyberdex.
+                If found, please return it to our Head Office or report to the
+                hotline below immediately.
+              </p>
+              <div className="mt-3.5 space-y-2 border-t border-amber-200/60 pt-3 text-xs">
+                <div className="flex items-start gap-2 text-amber-950">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                  <div>
+                    <span className="font-semibold">Head Office: </span>
+                    <span className="font-mono text-[11px]">
+                      6, Aina Street, Inity Estates, Obawole, Ogba, Ikeja,
+                      Lagos, Nigeria
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-amber-950">
+                  <PhoneCall className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                  <div>
+                    <span className="font-semibold">If Lost, Call: </span>
+                    <a
+                      href="tel:+2348032164197"
+                      className="font-mono font-bold text-amber-900 hover:underline"
+                    >
+                      +234 803 216 4197
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
