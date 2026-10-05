@@ -13,6 +13,8 @@ export interface UseBadgeExportReturn {
   copyUrl: (url: string) => Promise<boolean>;
   downloadCardFront: (staff: StaffProfile) => Promise<boolean>;
   downloadCardBack: (staff: StaffProfile) => Promise<boolean>;
+  generateCardFrontDataUrl: (staff: StaffProfile) => Promise<string | null>;
+  generateCardBackDataUrl: (staff: StaffProfile) => Promise<string | null>;
   downloadHighResPng: (staffId: string) => boolean;
   downloadVectorSvg: (staffId: string) => boolean;
 }
@@ -56,10 +58,9 @@ export function useBadgeExport(): UseBadgeExportReturn {
     }
   }, []);
 
-  const downloadCardFront = useCallback(
-    async (staff: StaffProfile): Promise<boolean> => {
-      if (!staff) return false;
-      setIsExportingFront(true);
+  const generateCardFrontDataUrl = useCallback(
+    async (staff: StaffProfile): Promise<string | null> => {
+      if (!staff) return null;
       try {
         const width = 1200;
         const height = 1900;
@@ -68,7 +69,7 @@ export function useBadgeExport(): UseBadgeExportReturn {
         canvas.width = width * scale;
         canvas.height = height * scale;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return false;
+        if (!ctx) return null;
 
         // Ensure all web fonts are loaded for vector typographic clarity
         if (typeof document !== "undefined" && document.fonts) {
@@ -159,20 +160,20 @@ export function useBadgeExport(): UseBadgeExportReturn {
 
         // Employee Full Name
         ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 52px 'Plus Jakarta Sans', sans-serif";
+        ctx.font = "bold 58px 'Plus Jakarta Sans', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(staff.fullName, width / 2, 935);
+        ctx.fillText(staff.fullName, width / 2, 920);
 
         // Employee Position
         ctx.fillStyle = "#1d4ed8";
-        ctx.font = "600 32px 'Plus Jakarta Sans', sans-serif";
+        ctx.font = "bold 35px 'Plus Jakarta Sans', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(staff.position, width / 2, 1010);
+        ctx.fillText(staff.position, width / 2, 985);
 
         // Verified Status Badge Pill
-        const pillWidth = 500;
-        const pillHeight = 60;
-        const pillY = 1075;
+        const pillWidth = 520;
+        const pillHeight = 64;
+        const pillY = 1035;
         ctx.fillStyle = "#ecfdf5";
         ctx.strokeStyle = "#a7f3d0";
         ctx.lineWidth = 2;
@@ -182,20 +183,47 @@ export function useBadgeExport(): UseBadgeExportReturn {
           pillY,
           pillWidth,
           pillHeight,
-          30
+          32
         );
         ctx.fill();
         ctx.stroke();
 
         ctx.fillStyle = "#047857";
-        ctx.font = "bold 22px 'JetBrains Mono', monospace";
+        ctx.font = "bold 28px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
-        ctx.fillText("● ACTIVE — VERIFIED STAFF", width / 2, pillY + 39);
+        ctx.fillText("ACTIVE — VERIFIED STAFF", width / 2, pillY + 41);
 
-        // Metadata Card Box
-        const metaBoxY = 1220;
+        // Metadata Card Box Rows Configuration
+        const metaRows: { label: string; value: string; isBlue?: boolean }[] = [
+          { label: "Staff ID:", value: staff.id },
+        ];
+        if (staff.email) {
+          metaRows.push({ label: "Email:", value: staff.email });
+        }
+        if (staff.phone) {
+          metaRows.push({ label: "Phone:", value: staff.phone });
+        }
+        if (
+          staff.certifications &&
+          staff.certifications.length > 0 &&
+          !staff.email
+        ) {
+          metaRows.push({
+            label: "Credentials:",
+            value: staff.certifications[0],
+            isBlue: true,
+          });
+        }
+        metaRows.push({
+          label: "Registry Portal:",
+          value: "verify.cyberdex.com.ng",
+          isBlue: true,
+        });
+
+        const rowStep = 64;
+        const metaBoxY = 1150;
         const metaBoxWidth = 920;
-        const metaBoxHeight = staff.email ? 310 : 210;
+        const metaBoxHeight = 32 + metaRows.length * rowStep;
         ctx.fillStyle = "#f8fafc";
         ctx.strokeStyle = "#e2e8f0";
         ctx.lineWidth = 2;
@@ -210,106 +238,38 @@ export function useBadgeExport(): UseBadgeExportReturn {
         ctx.fill();
         ctx.stroke();
 
-        // Staff ID Row
-        ctx.fillStyle = "#64748b";
-        ctx.font = "600 24px 'Plus Jakarta Sans', sans-serif";
-        ctx.textAlign = "left";
-        ctx.fillText(
-          "Staff ID:",
-          width / 2 - metaBoxWidth / 2 + 50,
-          metaBoxY + 64
-        );
-
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 28px 'JetBrains Mono', monospace";
-        ctx.textAlign = "right";
-        ctx.fillText(
-          staff.id,
-          width / 2 + metaBoxWidth / 2 - 50,
-          metaBoxY + 64
-        );
-
-        // Divider
-        ctx.strokeStyle = "#e2e8f0";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(width / 2 - metaBoxWidth / 2 + 40, metaBoxY + 112);
-        ctx.lineTo(width / 2 + metaBoxWidth / 2 - 40, metaBoxY + 112);
-        ctx.stroke();
-
-        // Email or Certifications Row
-        if (staff.email) {
-          ctx.fillStyle = "#64748b";
-          ctx.font = "600 24px 'Plus Jakarta Sans', sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText(
-            "Email:",
-            width / 2 - metaBoxWidth / 2 + 50,
-            metaBoxY + 160
-          );
-
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "600 24px 'JetBrains Mono', monospace";
-          ctx.textAlign = "right";
-          ctx.fillText(
-            staff.email,
-            width / 2 + metaBoxWidth / 2 - 50,
-            metaBoxY + 160
-          );
-
-          ctx.strokeStyle = "#e2e8f0";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(width / 2 - metaBoxWidth / 2 + 40, metaBoxY + 208);
-          ctx.lineTo(width / 2 + metaBoxWidth / 2 - 40, metaBoxY + 208);
-          ctx.stroke();
+        metaRows.forEach((row, index) => {
+          const currentY = metaBoxY + 50 + index * rowStep;
 
           ctx.fillStyle = "#64748b";
-          ctx.font = "600 22px 'Plus Jakarta Sans', sans-serif";
+          ctx.font = "bold 26px 'Plus Jakarta Sans', sans-serif";
           ctx.textAlign = "left";
-          ctx.fillText(
-            "Registry Portal:",
-            width / 2 - metaBoxWidth / 2 + 50,
-            metaBoxY + 256
-          );
+          ctx.fillText(row.label, width / 2 - metaBoxWidth / 2 + 50, currentY);
 
-          ctx.fillStyle = "#1d4ed8";
-          ctx.font = "600 22px 'JetBrains Mono', monospace";
+          ctx.fillStyle = row.isBlue ? "#1d4ed8" : "#0f172a";
+          ctx.font = "bold 30px 'JetBrains Mono', monospace";
           ctx.textAlign = "right";
-          ctx.fillText(
-            "verify.cyberdex.com.ng",
-            width / 2 + metaBoxWidth / 2 - 50,
-            metaBoxY + 256
-          );
-        } else if (staff.certifications && staff.certifications.length > 0) {
-          ctx.fillStyle = "#64748b";
-          ctx.font = "600 24px 'Plus Jakarta Sans', sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText(
-            "Credentials:",
-            width / 2 - metaBoxWidth / 2 + 50,
-            metaBoxY + 160
-          );
+          ctx.fillText(row.value, width / 2 + metaBoxWidth / 2 - 50, currentY);
 
-          ctx.fillStyle = "#1d4ed8";
-          ctx.font = "bold 24px 'JetBrains Mono', monospace";
-          ctx.textAlign = "right";
-          ctx.fillText(
-            staff.certifications[0],
-            width / 2 + metaBoxWidth / 2 - 50,
-            metaBoxY + 160
-          );
-        }
+          if (index < metaRows.length - 1) {
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(width / 2 - metaBoxWidth / 2 + 40, currentY + 19);
+            ctx.lineTo(width / 2 + metaBoxWidth / 2 - 40, currentY + 19);
+            ctx.stroke();
+          }
+        });
 
-        // Authorized Signature Block (centered, ending ~42px above footer)
+        // Authorized Signature Block (centered, ending ~45px above footer)
         try {
           const sig = await loadImage("/authorize-signature.png");
-          const sigWidth = 270;
+          const sigWidth = 300;
           const sigHeight = (sig.height / sig.width) * sigWidth;
           ctx.drawImage(
             sig,
             width / 2 - sigWidth / 2,
-            1580,
+            1500,
             sigWidth,
             sigHeight
           );
@@ -321,20 +281,20 @@ export function useBadgeExport(): UseBadgeExportReturn {
         ctx.strokeStyle = "#cbd5e1";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(width / 2 - 160, 1705);
-        ctx.lineTo(width / 2 + 160, 1705);
+        ctx.moveTo(width / 2 - 160, 1630);
+        ctx.lineTo(width / 2 + 160, 1630);
         ctx.stroke();
 
-        // Signature Labels (bold, high contrast, +2px)
+        // Signature Labels (bold, high contrast, enlarged)
         ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 24px 'Plus Jakarta Sans', sans-serif";
+        ctx.font = "bold 35px 'Plus Jakarta Sans', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Authorized Signature", width / 2, 1740);
+        ctx.fillText("Authorized Signature", width / 2, 1680);
 
         ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 28px 'JetBrains Mono', monospace";
+        ctx.font = "bold 40px 'Plus Jakarta Sans', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("CEO", width / 2, 1775);
+        ctx.fillText("CEO", width / 2, 1732);
 
         // Bottom Accent Strip (matching preview card footer)
         const bottomGrad = ctx.createLinearGradient(
@@ -351,40 +311,53 @@ export function useBadgeExport(): UseBadgeExportReturn {
 
         // Footer Text
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 26px 'JetBrains Mono', monospace";
+        ctx.font = "bold 35px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
-        ctx.fillText("www.cyberdex.com.ng", width / 2, height - 42);
+        ctx.fillText("www.cyberdex.com.ng", width / 2, height - 40);
 
-        // Download result
-        const dataUrl = canvas.toDataURL("image/png");
+        return canvas.toDataURL("image/png");
+      } catch (err) {
+        console.error("Failed to generate front badge data URL:", err);
+        return null;
+      }
+    },
+    []
+  );
+
+  const downloadCardFront = useCallback(
+    async (staff: StaffProfile): Promise<boolean> => {
+      if (!staff) return false;
+      setIsExportingFront(true);
+      try {
+        const dataUrl = await generateCardFrontDataUrl(staff);
+        if (!dataUrl) return false;
         triggerDownload(
           dataUrl,
           `cyberdex-${staff.id.toLowerCase()}-badge-front-600dpi.png`
         );
         return true;
       } catch (err) {
-        console.error("Failed to generate front badge:", err);
+        console.error("Failed to download front badge:", err);
         return false;
       } finally {
         setIsExportingFront(false);
       }
     },
-    []
+    [generateCardFrontDataUrl]
   );
 
-  const downloadCardBack = useCallback(
-    async (staff: StaffProfile): Promise<boolean> => {
-      if (!staff) return false;
-      setIsExportingBack(true);
+  const generateCardBackDataUrl = useCallback(
+    async (staff: StaffProfile): Promise<string | null> => {
+      if (!staff) return null;
       try {
         const width = 1200;
         const height = 1900;
-        const scale = 2; // Ultra-HD 2400 x 3800 px (711 DPI industrial grade)
+        const scale = 2; // Ultra-HD 2400 x 3800 px (industrial grade)
         const canvas = document.createElement("canvas");
         canvas.width = width * scale;
         canvas.height = height * scale;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return false;
+        if (!ctx) return null;
 
         // Ensure all web fonts are loaded for vector typographic clarity
         if (typeof document !== "undefined" && document.fonts) {
@@ -407,7 +380,7 @@ export function useBadgeExport(): UseBadgeExportReturn {
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // Load and draw official Logo at Top (identical position and dimensions to Front Card)
+        // Load and draw official Logo at Top (100% symmetric with Front Card position and dimensions)
         try {
           const logo = await loadImage("/cyberdex-logo-main.png");
           const logoWidth = 360;
@@ -429,23 +402,22 @@ export function useBadgeExport(): UseBadgeExportReturn {
 
         // Terms & Conditions Title
         ctx.fillStyle = "#d97706";
-        ctx.font = "bold 32px 'JetBrains Mono', monospace";
+        ctx.font = "bold 40px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
-        ctx.fillText("TERMS & CONDITIONS", width / 2, 490);
+        ctx.fillText("TERMS & CONDITIONS", width / 2, 460);
 
         // Terms Bullet Points
         const terms = [
           "This ID card is the official property of Cyberdex.",
           "Must be worn at all times while on company premises.",
           "This credential pass is strictly non-transferable.",
-          "If found, please return to Cyberdex or scan below.",
+          "If found, return to Head Office or call hotline below.",
         ];
 
-        ctx.fillStyle = "#334155";
-        ctx.font = "500 24px 'Plus Jakarta Sans', sans-serif";
+        ctx.font = "600 32px 'Plus Jakarta Sans', sans-serif";
         ctx.textAlign = "left";
         const termsX = width / 2 - 440;
-        let termsY = 560;
+        let termsY = 530;
         for (const term of terms) {
           ctx.fillStyle = "#d97706";
           ctx.beginPath();
@@ -457,8 +429,8 @@ export function useBadgeExport(): UseBadgeExportReturn {
           termsY += 54;
         }
 
-        // High-Contrast QR Code Section (Centered, Expanded QR with reduced container padding)
-        const qrBoxY = 820;
+        // High-Contrast QR Code Section (Centered)
+        const qrBoxY = 740;
         const qrBoxSize = 560;
         const qrPadding = 16;
         const qrDrawSize = qrBoxSize - qrPadding * 2; // 528px
@@ -491,7 +463,7 @@ export function useBadgeExport(): UseBadgeExportReturn {
 
         // Instruction under QR
         ctx.fillStyle = "#64748b";
-        ctx.font = "600 22px 'JetBrains Mono', monospace";
+        ctx.font = "bold 30px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
         ctx.fillText(
           "Scan with camera to verify credentials",
@@ -499,14 +471,72 @@ export function useBadgeExport(): UseBadgeExportReturn {
           qrBoxY + qrBoxSize + 48
         );
 
-        // Contact info box
-        const contactY = 1490;
+        // Head Office & Lost Card Hotline & Inquiries Card
+        const infoBoxY = 1380;
+        const infoBoxWidth = 920;
+        const infoBoxHeight = 370;
+        ctx.fillStyle = "#f8fafc";
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(
+          width / 2 - infoBoxWidth / 2,
+          infoBoxY,
+          infoBoxWidth,
+          infoBoxHeight,
+          24
+        );
+        ctx.fill();
+        ctx.stroke();
+
+        // Head Office Header (+3px)
+        ctx.fillStyle = "#d97706";
+        ctx.font = "bold 30px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("HEAD OFFICE", width / 2, infoBoxY + 46);
+
+        // Address Lines (+3px)
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "600 32px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillText(
+          "6, Aina Street, Inity Estates, Obawole, Ogba,",
+          width / 2,
+          infoBoxY + 90
+        );
+        ctx.fillText("Ikeja, Lagos, Nigeria", width / 2, infoBoxY + 130);
+
+        // Divider 1
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(width / 2 - 380, infoBoxY + 152);
+        ctx.lineTo(width / 2 + 380, infoBoxY + 152);
+        ctx.stroke();
+
+        // Recovery Hotline (+3px)
         ctx.fillStyle = "#0f172a";
-        ctx.font = "600 24px 'JetBrains Mono', monospace";
-        ctx.fillText("verify.cyberdex.com.ng", width / 2, contactY);
+        ctx.font = "bold 32px 'JetBrains Mono', monospace";
+        ctx.fillText(
+          "If Lost, Call: +234 803 216 4197",
+          width / 2,
+          infoBoxY + 205
+        );
+
+        // Divider 2
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(width / 2 - 380, infoBoxY + 234);
+        ctx.lineTo(width / 2 + 380, infoBoxY + 234);
+        ctx.stroke();
+
+        // Official Registry & Inquiries (+3px)
+        ctx.fillStyle = "#1d4ed8";
+        ctx.font = "bold 32px 'JetBrains Mono', monospace";
+        ctx.fillText("verify.cyberdex.com.ng", width / 2, infoBoxY + 290);
         ctx.fillStyle = "#64748b";
-        ctx.font = "500 22px 'JetBrains Mono', monospace";
-        ctx.fillText("info@cyberdex.com.ng", width / 2, contactY + 46);
+        ctx.font = "600 32px 'JetBrains Mono', monospace";
+        ctx.fillText("info@cyberdex.com.ng", width / 2, infoBoxY + 338);
 
         // Bottom Accent Strip (matching Front Card)
         const bottomGrad = ctx.createLinearGradient(
@@ -522,25 +552,39 @@ export function useBadgeExport(): UseBadgeExportReturn {
         ctx.fillRect(0, height - 100, width, 100);
 
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 26px 'JetBrains Mono', monospace";
+        ctx.font = "bold 35px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
-        ctx.fillText("OFFICIAL SECURITY PROPERTY", width / 2, height - 42);
+        ctx.fillText("OFFICIAL SECURITY PROPERTY", width / 2, height - 40);
 
-        // Download result
-        const dataUrl = canvas.toDataURL("image/png");
+        return canvas.toDataURL("image/png");
+      } catch (err) {
+        console.error("Failed to generate back badge data URL:", err);
+        return null;
+      }
+    },
+    [canvasRef]
+  );
+
+  const downloadCardBack = useCallback(
+    async (staff: StaffProfile): Promise<boolean> => {
+      if (!staff) return false;
+      setIsExportingBack(true);
+      try {
+        const dataUrl = await generateCardBackDataUrl(staff);
+        if (!dataUrl) return false;
         triggerDownload(
           dataUrl,
           `cyberdex-${staff.id.toLowerCase()}-badge-back-600dpi.png`
         );
         return true;
       } catch (err) {
-        console.error("Failed to generate back badge:", err);
+        console.error("Failed to download back badge:", err);
         return false;
       } finally {
         setIsExportingBack(false);
       }
     },
-    [canvasRef]
+    [generateCardBackDataUrl]
   );
 
   const downloadHighResPng = useCallback((staffId: string): boolean => {
@@ -581,6 +625,8 @@ export function useBadgeExport(): UseBadgeExportReturn {
     copyUrl,
     downloadCardFront,
     downloadCardBack,
+    generateCardFrontDataUrl,
+    generateCardBackDataUrl,
     downloadHighResPng,
     downloadVectorSvg,
   };
